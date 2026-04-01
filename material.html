@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url=materials.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecting - Materials Inventory</title>
+  <link rel="icon" href="logo.jpeg" type="image/jpeg" />
+  <link rel="preload" href="logo.jpeg" as="image" />
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e7ecf3;
+      --shadow:0 18px 40px rgba(2,6,23,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 520px at 15% 5%, rgba(37,99,235,.10), transparent 60%),
+        radial-gradient(900px 520px at 90% 20%, rgba(22,163,74,.10), transparent 60%),
+        var(--bg);
+    }
+    .card{
+      width:min(460px,100%);
+      padding:30px;
+      border-radius:22px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.94);
+      box-shadow:var(--shadow);
+      text-align:center;
+    }
+    .logo{
+      width:72px;
+      height:72px;
+      margin:0 auto 16px;
+      padding:10px;
+      border-radius:20px;
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow:0 10px 24px rgba(2,6,23,.08);
+    }
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+    h1{margin:0 0 8px;font-size:22px}
+    p{margin:0;color:var(--muted);line-height:1.5}
+    .actions{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+    a{
+      display:inline-flex;
+      padding:12px 16px;
+      border-radius:14px;
+      background:#0f172a;
+      color:#fff;
+      text-decoration:none;
+      font-weight:700;
+    }
+    .ghost{
+      background:#fff;
+      color:#0f172a;
+      border:1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">
+      <img src="logo.jpeg" alt="Restoran Ayam Gepuk Ngences logo" loading="eager" decoding="async" />
+    </div>
+    <h1>Opening Materials Inventory</h1>
+    <p>This legacy shortcut now forwards to <strong>materials.html</strong> so older links, bookmarks, and menu buttons still work without interruption.</p>
+    <div class="actions">
+      <a href="materials.html">Continue</a>
+      <a class="ghost" href="menu.html">Back to Menu Admin</a>
+    </div>
+  </main>
+  <script>
+    window.location.replace("materials.html");
+  </script>
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="logo.jpeg" type="image/jpeg">
+  <link rel="preload" href="logo.jpeg" as="image">
+  <title>Queue Status — TV</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Firebase v8 (matches your current customer.html) -->
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: rgba(255,255,255,.92);
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: rgba(226,232,240,.95);
+      --shadow: 0 18px 44px rgba(2,6,23,.10);
+      --shadowSoft: 0 10px 24px rgba(2,6,23,.06);
+      --radius: 18px;
+
+      --new: #2563eb;
+      --prep: #f59e0b;
+      --ready: #16a34a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color: var(--text);
+      background:
+        radial-gradient(950px 560px at 12% 0%, rgba(37,99,235,.14), transparent 60%),
+        radial-gradient(950px 560px at 100% 10%, rgba(245,158,11,.12), transparent 58%),
+        var(--bg);
+      padding: clamp(12px, 2vw, 22px);
+      overflow-x: hidden; /* Prevent horizontal scrolling */
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: calc(-1 * clamp(12px, 2vw, 22px)) calc(-1 * clamp(12px, 2vw, 22px)) 18px;
+      padding: 16px clamp(12px, 2vw, 22px) 14px;
+      background: linear-gradient(180deg, rgba(245,247,251,.92), rgba(245,247,251,.72));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(226,232,240,.9);
+    }
+
+    .topRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 320px;
+    }
+
+    .logoWrap {
+      width: 46px;
+      height: 46px;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: var(--shadowSoft);
+      flex: 0 0 auto;
+    }
+
+    .logoWrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .brandText h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 1000;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .brandText p {
+      margin: 3px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .pills {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(226,232,240,.95);
+      box-shadow: var(--shadowSoft);
+      font-weight: 900;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+    }
+
+    .dot.online { background: var(--ready); }
+    .dot.offline { background: #ef4444; }
+
+    .container {
+      max-width: 1920px;
+      margin: 0 auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      position: relative;
+      min-height: calc(100vh - 138px);
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 6px;
+      width: 100%;
+      background: linear-gradient(90deg, rgba(37,99,235,.85), rgba(96,165,250,.85));
+    }
+
+    .panel.prep::before {
+      background: linear-gradient(90deg, rgba(245,158,11,.85), rgba(251,191,36,.85));
+    }
+
+    .panel.ready::before {
+      background: linear-gradient(90deg, rgba(22,163,74,.85), rgba(52,211,153,.85));
+    }
+
+    .panelHead {
+      padding: 16px 16px 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .titleRow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      box-shadow: var(--shadowSoft);
+      flex: 0 0 auto;
+      font-size: 18px;
+    }
+
+    .icon.new { background: linear-gradient(180deg, #2563eb, #1d4ed8); }
+    .icon.prep { background: linear-gradient(180deg, #f59e0b, #d97706); }
+    .icon.ready { background: linear-gradient(180deg, #16a34a, #15803d); }
+
+    .panelTitle {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing: -0.02em;
+    }
+
+    .panelSub {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .countPill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(2,6,23,.06);
+      border: 1px solid rgba(226,232,240,.95);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 1000;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .countPill .big { font-size: 15px; }
+
+    .panelBody { padding: 0 16px 16px; }
+
+    /* Multi-column chips to fit on ONE page */
+    .chips {
+      display: block;
+      column-count: 3;
+      column-gap: 10px;
+      padding-top: 6px;
+    }
+
+    .chips.cols-2 { column-count: 2; }
+    .chips.cols-3 { column-count: 3; }
+    .chips.cols-4 { column-count: 4; }
+    .chips.cols-5 { column-count: 5; }
+
+    .chip {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 0 10px 0;
+      break-inside: avoid;
+      border-radius: 999px;
+      padding: 12px 0;
+      font-weight: 1000;
+      font-size: 18px;
+      border: 1px solid rgba(226,232,240,.95);
+      background: rgba(255,255,255,.88);
+    }
+
+    .chip.new { border-color: rgba(37,99,235,.25); color: #1d4ed8; background: rgba(37,99,235,.06); }
+    .chip.prep { border-color: rgba(245,158,11,.28); color: #b45309; background: rgba(245,158,11,.08); }
+    .chip.ready { border-color: rgba(22,163,74,.25); color: #15803d; background: rgba(22,163,74,.08); }
+
+    .commaBox {
+      font-size: 22px;
+      font-weight: 1000;
+      line-height: 1.5;
+      letter-spacing: .01em;
+      padding-top: 6px;
+    }
+
+    .empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed rgba(148,163,184,.55);
+      border-radius: 16px;
+      padding: 14px;
+      color: var(--muted);
+      background: rgba(255,255,255,.60);
+      font-weight: 900;
+      margin-top: 8px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1360px) {
+      .grid {
+        gap: 12px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid .panel.ready {
+        grid-column: 1 / -1;
+      }
+
+      .chip {
+        font-size: 16px;
+        padding: 10px 0;
+        margin-bottom: 8px;
+      }
+
+      .panel {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .brand {
+        min-width: 0;
+      }
+
+      .pills {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .grid .panel.ready {
+        grid-column: auto;
+      }
+
+      .chip {
+        font-size: 14px;
+        padding: 8px 0;
+        margin-bottom: 6px;
+      }
+
+      .topbar {
+        margin-bottom: 14px;
+      }
+
+      .panelHead {
+        padding: 14px 14px 8px;
+      }
+
+      .panelBody {
+        padding: 0 14px 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .panel {
+        min-height: auto;
+      }
+
+      .chip {
+        font-size: 13px;
+      }
+
+      .commaBox {
+        font-size: 18px;
+      }
+    }
+
+    /* Dark mode */
+    body.dark {
+      --bg: #0b1220;
+      --card: rgba(15,23,42,.82);
+      --text: #e5e7eb;
+      --muted: #a8b3c7;
+      --border: rgba(148,163,184,.18);
+      --shadow: 0 20px 54px rgba(0,0,0,.40);
+      --shadowSoft: 0 10px 24px rgba(0,0,0,.28);
+    }
+
+    body.dark .pill { background: rgba(15,23,42,.74); }
+    body.dark .chip { background: rgba(15,23,42,.58); }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topRow">
+      <div class="brand">
+        <div class="logoWrap">
+          <img src="logo.jpeg" alt="Restoran Ayam Gepuk Ngences logo" loading="eager" decoding="async" />
+        </div>
+        <div class="brandText">
+          <h1>Queue Status</h1>
+          <p id="headerMeta">Live update • Last updated: …</p>
+        </div>
+      </div>
+
+      <div class="pills">
+        <div class="pill"><span id="connDot" class="dot"></span><span id="connText">…</span></div>
+        <div class="pill" id="totalCounts">…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      <section class="panel new" aria-label="New Orders">
+        <div class="panelHead">
+          <div class="titleRow">
+            <div class="icon new"><i class="fa-solid fa-inbox"></i></div>
+            <div>
+              <h2 class="panelTitle">New Orders</h2>
+              <p class="panelSub">Just received</p>
+            </div>
+          </div>
+          <div class="countPill"><span class="big" id="newCount">0</span> orders</div>
+        </div>
+        <div class="panelBody">
+          <div id="newList" class="chips cols-3"></div>
+          <div id="newEmpty" class="empty" style="display:none;">No orders</div>
+        </div>
+      </section>
+
+      <section class="panel prep" aria-label="Preparing">
+        <div class="panelHead">
+          <div class="titleRow">
+            <div class="icon prep"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div>
+              <h2 class="panelTitle">Preparing</h2>
+              <p class="panelSub">In progress</p>
+            </div>
+          </div>
+          <div class="countPill"><span class="big" id="prepCount">0</span> orders</div>
+        </div>
+        <div class="panelBody">
+          <div id="prepList" class="chips cols-3"></div>
+          <div id="prepEmpty" class="empty" style="display:none;">No orders</div>
+        </div>
+      </section>
+
+      <section class="panel ready" aria-label="Ready">
+        <div class="panelHead">
+          <div class="titleRow">
+            <div class="icon ready"><i class="fa-solid fa-check-circle"></i></div>
+            <div>
+              <h2 class="panelTitle">Ready</h2>
+              <p class="panelSub">Pick up</p>
+            </div>
+          </div>
+          <div class="countPill"><span class="big" id="readyCount">0</span> orders</div>
+        </div>
+        <div class="panelBody">
+          <div id="readyList" class="chips cols-3"></div>
+          <div id="readyEmpty" class="empty" style="display:none;">No orders</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+    <script>
+    // ===== Firebase Config (same as your customer.html) =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkRBbgm2TmTKsdB78VFfSnFzTUfFAPcZI",
+      authDomain: "serverayamgepukkualakangsar.firebaseapp.com",
+      databaseURL: "https://serverayamgepukkualakangsar-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "serverayamgepukkualakangsar",
+      storageBucket: "serverayamgepukkualakangsar.firebasestorage.app",
+      messagingSenderId: "241193072416",
+      appId: "1:241193072416:web:5ba081c4056abf8b3d0945"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const ordersRef = database.ref("orders");
+
+    // ===== UI =====
+    const elNewList = document.getElementById("newList");
+    const elPrepList = document.getElementById("prepList");
+    const elReadyList = document.getElementById("readyList");
+
+    const elNewEmpty = document.getElementById("newEmpty");
+    const elPrepEmpty = document.getElementById("prepEmpty");
+    const elReadyEmpty = document.getElementById("readyEmpty");
+
+    const elNewCount = document.getElementById("newCount");
+    const elPrepCount = document.getElementById("prepCount");
+    const elReadyCount = document.getElementById("readyCount");
+
+    const elConnDot = document.getElementById("connDot");
+    const elConnText = document.getElementById("connText");
+    const elTotalCounts = document.getElementById("totalCounts");
+    const headerMeta = document.getElementById("headerMeta");
+
+    // ===== TV controls (keyboard) =====
+    // D = dark mode toggle
+    // S = sound toggle
+    // F = fullscreen toggle
+    const prefsKey = "queue_tv_prefs_v1";
+    const prefs = (() => {
+      try {
+        return Object.assign({ dark:false, sound:true }, JSON.parse(localStorage.getItem(prefsKey) || "{}"));
+      } catch {
+        return { dark:false, sound:true };
+      }
+    })();
+    function savePrefs(){
+      try { localStorage.setItem(prefsKey, JSON.stringify(prefs)); } catch {}
+    }
+    function applyPrefs(){
+      document.body.classList.toggle("dark", !!prefs.dark);
+    }
+    applyPrefs();
+
+    document.addEventListener("keydown", async (e) => {
+      const k = String(e.key || "").toLowerCase();
+      if(k === "d") {
+        prefs.dark = !prefs.dark; savePrefs(); applyPrefs();
+      }
+      if(k === "s") {
+        prefs.sound = !prefs.sound; savePrefs();
+      }
+      if(k === "f") {
+        try {
+          if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch {}
+      }
+    });
+
+    // ===== Helpers =====
+    function setConnectionUI(){
+      const online = navigator.onLine;
+      elConnDot.classList.toggle("online", online);
+      elConnDot.classList.toggle("offline", !online);
+      elConnText.textContent = online ? "Online" : "Offline";
+    }
+    window.addEventListener("online", setConnectionUI);
+    window.addEventListener("offline", setConnectionUI);
+    setConnectionUI();
+
+    function cleanQueue(q){
+      const s = String(q || "").trim();
+      if(!s) return "";
+      const bad = ["n/a","na","unknown","null","undefined"];
+      if(bad.includes(s.toLowerCase())) return "";
+      return s;
+    }
+
+    function sortNumericStrings(arr){
+      return [...arr].sort((a,b) => {
+        const na = parseInt(a,10), nb = parseInt(b,10);
+        const aNum = Number.isFinite(na) && String(na) === a;
+        const bNum = Number.isFinite(nb) && String(nb) === b;
+        if(aNum && bNum) return na - nb;
+        if(aNum && !bNum) return -1;
+        if(!aNum && bNum) return 1;
+        return a.localeCompare(b);
+      });
+    }
+
+    function chooseColumns(count){
+      if(count >= 60) return 5;
+      if(count >= 40) return 4;
+      if(count >= 24) return 3;
+      return 3; // TV default
+    }
+    function useCommaMode(count){ return count >= 95; }
+
+    function renderList(elList, elEmpty, values, cls){
+      elList.innerHTML = "";
+      elEmpty.style.display = values.length ? "none" : "flex";
+      if(!values.length) return;
+
+      if(useCommaMode(values.length)){
+        const div = document.createElement("div");
+        div.className = "commaBox";
+        div.textContent = values.join(", ");
+        elList.appendChild(div);
+        return;
+      }
+
+      const cols = chooseColumns(values.length);
+      elList.classList.remove("cols-2","cols-3","cols-4","cols-5");
+      elList.classList.add(`cols-${cols}`);
+
+      for(const q of values){
+        const chip = document.createElement("div");
+        chip.className = "chip " + cls;
+        chip.textContent = q;
+        elList.appendChild(chip);
+      }
+    }
+
+    // ===== Queue categorization (same rules as your customer.html) =====
+    let prevReady = new Set();
+
+    function categorizeOrders(ordersData){
+      const preparingQueue = [];
+      const readyQueue = [];
+      const receiverQueue = [];
+
+      Object.entries(ordersData || {}).forEach(([orderId, order]) => {
+        if(!order) return;
+
+        const queueNumber = cleanQueue(order.queueNumber);
+        if(!queueNumber) return;
+
+        const status = String(order.status || "").trim().toLowerCase();
+        const foodStatus = String(order.foodStatus || "").trim().toLowerCase();
+        const drinkStatus = String(order.drinkStatus || "").trim().toLowerCase();
+
+        // READY: both ready
+        if(foodStatus === "food ready" && drinkStatus === "drink ready"){
+          readyQueue.push(queueNumber);
+          return;
+        }
+
+        // PREPARING: either preparing or one ready
+        if(
+          foodStatus.includes("preparing") ||
+          drinkStatus.includes("preparing") ||
+          foodStatus === "food ready" ||
+          drinkStatus === "drink ready"
+        ){
+          preparingQueue.push(queueNumber);
+          return;
+        }
+
+        // RECEIVED
+        if(status.includes("received")){
+          receiverQueue.push(queueNumber);
+          return;
+        }
+
+        // fallback
+        receiverQueue.push(queueNumber);
+      });
+
+      return {
+        receiver: sortNumericStrings([...new Set(receiverQueue)]),
+        preparing: sortNumericStrings([...new Set(preparingQueue)]),
+        ready: sortNumericStrings([...new Set(readyQueue)]),
+      };
+    }
+
+    function beep(){
+      if(!prefs.sound) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        g.gain.value = 0.04;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        setTimeout(() => {
+          o.stop(); ctx.close();
+        }, 180);
+      } catch {}
+    }
+
+    function celebrate(newReady){
+      if(!newReady.length) return;
+      try {
+        confetti({
+          particleCount: Math.min(80, 40 + newReady.length * 10),
+          spread: 70,
+          startVelocity: 34,
+          origin: { y: 0.65 }
+        });
+      } catch {}
+      beep();
+    }
+
+    function updateHeader(listing){
+      const now = new Date();
+      headerMeta.textContent = `Live update • Last updated: ${now.toLocaleString()}`;
+      const total = listing.receiver.length + listing.preparing.length + listing.ready.length;
+      elTotalCounts.textContent = `${total} total • New ${listing.receiver.length} • Preparing ${listing.preparing.length} • Ready ${listing.ready.length}`;
+    }
+
+    function updateUI(listing){
+      elNewCount.textContent = String(listing.receiver.length);
+      elPrepCount.textContent = String(listing.preparing.length);
+      elReadyCount.textContent = String(listing.ready.length);
+
+      renderList(elNewList, elNewEmpty, listing.receiver, "new");
+      renderList(elPrepList, elPrepEmpty, listing.preparing, "prep");
+      renderList(elReadyList, elReadyEmpty, listing.ready, "ready");
+
+      updateHeader(listing);
+    }
+
+    // ===== Subscribe =====
+    ordersRef.on("value", (snapshot) => {
+      const ordersData = snapshot.val() || {};
+      const listing = categorizeOrders(ordersData);
+
+      const currentReady = new Set(listing.ready);
+      const newlyReady = listing.ready.filter(q => !prevReady.has(q));
+      celebrate(newlyReady);
+      prevReady = currentReady;
+
+      updateUI(listing);
+    }, (err) => {
+      console.error("Firebase error:", err);
+    });
+  </script>
+</body>
+</html>
