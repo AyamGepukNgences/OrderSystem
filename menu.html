@@ -258,9 +258,13 @@
   .category-panel h3{margin:0 0 10px 0;font-size:14px;letter-spacing:-0.01em}
   .category-list{display:flex;flex-direction:column;gap:8px}
   .category-row{
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:#fff;
   }
+  .category-row-left{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .category-row-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .category-manage{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px}
+  .category-manage .field{flex:1;min-width:220px;margin:0}
   .category-name{font-weight:900}
   .category-note{font-size:12px;color:var(--muted);margin-top:2px}
   .notice-small{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
@@ -379,15 +383,15 @@
             </div>
             <div class="field">
               <label>Category</label>
-              <select id="category">
-                <option value="food">Food</option>
-                <option value="Side Dish">Side Dish</option>
-                <option value="Air Panas">Air Panas</option>
-                <option value="Air Sejuk">Air Sejuk</option>
-                <option value="Little Ngences Food">Little Ngences Food</option>
-                <option value="Little Ngences Drink">Little Ngences Drink</option>
-                <option value="Others">Others</option>
-              </select>
+              <select id="category"></select>
+              <div class="category-manage">
+                <div class="field">
+                  <label style="margin-bottom:0">Add new category</label>
+                  <input id="new-category-name" placeholder="e.g. Dessert" type="text"/>
+                </div>
+                <button class="mini-btn" id="add-category-btn" type="button">+ Add Category</button>
+              </div>
+              <div class="help">Add a category here. Delete or toggle availability from the Category Availability panel below.</div>
             </div>
           </div>
 
@@ -584,16 +588,7 @@
       <div class="toolbar">
         <div class="tool">
           <div class="label">Filter</div>
-          <select id="filter">
-            <option value="all">All</option>
-            <option value="food">Food</option>
-            <option value="Side Dish">Side Dish</option>
-            <option value="Air Panas">Air Panas</option>
-            <option value="Air Sejuk">Air Sejuk</option>
-            <option value="Little Ngences Food">Little Ngences Food</option>
-            <option value="Little Ngences Drink">Little Ngences Drink</option>
-            <option value="Others">Others</option>
-          </select>
+          <select id="filter"></select>
         </div>
 
         <div class="tool grow">
@@ -631,17 +626,22 @@
   const itemsRef = ref(db, "menuItems");
   const categoryStatusRef = ref(db, "categoryStatus");
   const materialsRef = ref(db, "materials");
+  const categoriesRef = ref(db, "menuCategories");
 
-  const categories = [
+  const DEFAULT_CATEGORIES = [
     "food","Side Dish","Air Panas","Air Sejuk",
     "Little Ngences Food","Little Ngences Drink","Others"
   ];
+
+  let categories = [...DEFAULT_CATEGORIES];
 
   // ---------------- DOM ----------------
   const itemsList = document.getElementById("items-list");
   const nameEl = document.getElementById("name");
   const priceEl = document.getElementById("price");
   const categoryEl = document.getElementById("category");
+  const newCategoryNameEl = document.getElementById("new-category-name");
+  const addCategoryBtn = document.getElementById("add-category-btn");
   const imageEl = document.getElementById("image");
   const addonsEl = document.getElementById("addons");
   const addonsSectionEl = document.getElementById("addonsSection");
@@ -694,9 +694,12 @@
   let editingId = null;
   let lastItemsCache = {};
   let currentCategoryStatus = {};
+  let rawCategoryStatusCache = {};
+  let categoryRegistryCache = {};
   let materialsCache = {};
   let formBadges = { isNew:false, isHot:false, isRecommended:false };
   let allowAddOnsEnabled = false;
+  let seededDefaultCategories = false;
 
   // ---------------- UI helpers ----------------
   function showNotice(msg, time=2500){
@@ -737,6 +740,7 @@
   }
 
   function codePrefixForCategory(category){
+    const resolved = normalizeCategory(category);
     const map = {
       "food": "F",
       "Side Dish": "S",
@@ -746,7 +750,21 @@
       "Little Ngences Drink": "LD",
       "Others": "O"
     };
-    return map[category] || "X";
+    if(map[resolved]) return map[resolved];
+
+    const words = String(resolved || "")
+      .toUpperCase()
+      .split(/\s+/)
+      .map(part => part.replace(/[^A-Z0-9]/g, ""))
+      .filter(Boolean);
+
+    if(words.length >= 2){
+      return words.map(part => part[0]).join("").slice(0, 2) || "X";
+    }
+    if(words.length === 1){
+      return words[0].slice(0, 2) || "X";
+    }
+    return "X";
   }
 
   function isUniqueCodeTaken(code, excludeId=null, sourceItems=null){
@@ -1094,27 +1112,232 @@
       .toLowerCase();
   }
 
-  const CATEGORY_ALIAS_MAP = Object.freeze(categories.reduce((acc, cat) => {
-    acc[sanitizeCategoryKey(cat)] = cat;
-    return acc;
-  }, { food: "food", others: "Others" }));
+  function escapeHtml(str){
+    return String(str ?? "").replace(/[&<>"']/g, m => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[m]));
+  }
+
+  function getRegistryCategoryName(entryKey, entryValue){
+    if(typeof entryValue === "string") return String(entryValue).trim();
+    if(entryValue && typeof entryValue === "object"){
+      const fromValue = String(entryValue.name || entryValue.label || "").trim();
+      if(fromValue) return fromValue;
+    }
+    return String(entryKey || "").trim();
+  }
+
+  function compareCategories(a, b){
+    const keyA = sanitizeCategoryKey(a);
+    const keyB = sanitizeCategoryKey(b);
+    const idxA = DEFAULT_CATEGORIES.findIndex(cat => sanitizeCategoryKey(cat) === keyA);
+    const idxB = DEFAULT_CATEGORIES.findIndex(cat => sanitizeCategoryKey(cat) === keyB);
+    if(idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if(idxA !== -1) return -1;
+    if(idxB !== -1) return 1;
+    return String(a || "").localeCompare(String(b || ""));
+  }
+
+  function buildCategoryList(){
+    const bucket = new Map();
+    const remember = (raw) => {
+      const name = String(raw || "").trim().replace(/\s+/g, " ");
+      if(!name) return;
+      const key = sanitizeCategoryKey(name);
+      if(!key || bucket.has(key)) return;
+      bucket.set(key, name);
+    };
+
+    const registryEntries = Object.entries(categoryRegistryCache || {});
+    if(registryEntries.length === 0){
+      DEFAULT_CATEGORIES.forEach(remember);
+    } else {
+      registryEntries.forEach(([key, value]) => remember(getRegistryCategoryName(key, value)));
+    }
+
+    Object.values(lastItemsCache || {}).forEach(item => remember(item?.category));
+    remember("Others");
+
+    return Array.from(bucket.values()).sort(compareCategories);
+  }
 
   function normalizeCategory(cat){
-    const raw = String(cat || "").trim();
+    const raw = String(cat || "").trim().replace(/\s+/g, " ");
     if(!raw) return "Others";
-    return CATEGORY_ALIAS_MAP[sanitizeCategoryKey(raw)] || "Others";
+    const target = sanitizeCategoryKey(raw);
+    return categories.find(existing => sanitizeCategoryKey(existing) === target)
+      || DEFAULT_CATEGORIES.find(existing => sanitizeCategoryKey(existing) === target)
+      || raw;
   }
 
   function getCategoryStatusValue(rawMap, cat){
-    const target = sanitizeCategoryKey(normalizeCategory(cat));
+    const target = sanitizeCategoryKey(cat);
     for(const [key, value] of Object.entries(rawMap || {})){
-      if(sanitizeCategoryKey(normalizeCategory(key)) === target) return value;
+      const comparableName = getRegistryCategoryName(key, value);
+      if(sanitizeCategoryKey(comparableName) === target || sanitizeCategoryKey(key) === target){
+        return value !== false;
+      }
     }
     return true;
   }
 
   function sanitizeKey(k){
     return sanitizeCategoryKey(k);
+  }
+
+  function renderCategorySelects(preferredCategory=null){
+    const desiredCategory = normalizeCategory(preferredCategory || categoryEl?.value || "food");
+    const desiredFilter = filterEl?.value || "all";
+
+    if(categoryEl){
+      categoryEl.innerHTML = categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join("");
+      const selectedCategory = categories.find(cat => sanitizeCategoryKey(cat) === sanitizeCategoryKey(desiredCategory));
+      categoryEl.value = selectedCategory || categories.find(cat => sanitizeCategoryKey(cat) === "food") || categories[0] || "Others";
+    }
+
+    if(filterEl){
+      filterEl.innerHTML = ['<option value="all">All</option>']
+        .concat(categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`))
+        .join("");
+      const selectedFilter = categories.find(cat => sanitizeCategoryKey(cat) === sanitizeCategoryKey(desiredFilter));
+      filterEl.value = desiredFilter === "all" ? "all" : (selectedFilter || "all");
+    }
+  }
+
+  function syncCategoryState(preferredCategory=null){
+    categories = buildCategoryList();
+    renderCategorySelects(preferredCategory);
+
+    const mapped = {};
+    categories.forEach(cat => {
+      mapped[cat] = getCategoryStatusValue(rawCategoryStatusCache, cat);
+    });
+    currentCategoryStatus = mapped;
+
+    renderCategoryAvailabilityUI();
+    renderItems(lastItemsCache || {});
+    updateUniqueCodeUI();
+  }
+
+  async function ensureDefaultCategoriesSeeded(){
+    if(seededDefaultCategories) return;
+    seededDefaultCategories = true;
+    try{
+      const updates = {};
+      DEFAULT_CATEGORIES.forEach(cat => {
+        const key = sanitizeKey(cat);
+        updates[`menuCategories/${key}/name`] = cat;
+      });
+      await update(ref(db), updates);
+    }catch(err){
+      console.error("Failed to seed default categories:", err);
+    }
+  }
+
+  async function addCategoryFromInput(){
+    const name = String(newCategoryNameEl?.value || "").trim().replace(/\s+/g, " ");
+    if(!name){
+      newCategoryNameEl?.focus();
+      showNotice("Enter a category name first.");
+      return;
+    }
+
+    const key = sanitizeKey(name);
+    if(!key){
+      showNotice("Category name contains only unsupported characters.");
+      return;
+    }
+
+    const existing = categories.find(cat => sanitizeCategoryKey(cat) === key);
+    if(existing){
+      renderCategorySelects(existing);
+      categoryEl.value = existing;
+      newCategoryNameEl.value = "";
+      updateUniqueCodeUI({ forceGenerate:true });
+      showNotice(`Category "${existing}" already exists.`);
+      return;
+    }
+
+    try{
+      const updates = {};
+      updates[`menuCategories/${key}/name`] = name;
+      updates[`menuCategories/${key}/createdAt`] = Date.now();
+      updates[`categoryStatus/${key}`] = true;
+      await update(ref(db), updates);
+
+      categoryRegistryCache[key] = { name, createdAt: Date.now() };
+      rawCategoryStatusCache[key] = true;
+      newCategoryNameEl.value = "";
+      syncCategoryState(name);
+      categoryEl.value = normalizeCategory(name);
+      updateUniqueCodeUI({ forceGenerate:true });
+      showNotice(`Added category "${name}".`);
+    }catch(err){
+      console.error(err);
+      showNotice("Failed to add category.");
+    }
+  }
+
+  function getItemIdsForCategory(cat){
+    const target = sanitizeCategoryKey(cat);
+    return Object.entries(lastItemsCache || {})
+      .filter(([, item]) => sanitizeCategoryKey(normalizeCategory(item?.category || "Others")) === target)
+      .map(([id]) => id);
+  }
+
+  async function deleteCategory(cat){
+    const normalized = normalizeCategory(cat);
+    const key = sanitizeKey(normalized);
+    if(key === sanitizeKey("Others")){
+      showNotice('The "Others" category cannot be deleted.');
+      return;
+    }
+
+    const affectedIds = getItemIdsForCategory(normalized);
+    const confirmText = affectedIds.length
+      ? `Delete category "${normalized}"? ${affectedIds.length} item(s) will be moved to "Others".`
+      : `Delete category "${normalized}"?`;
+    if(!confirm(confirmText)) return;
+
+    try{
+      const updates = {};
+      updates[`menuCategories/${key}`] = null;
+      updates[`categoryStatus/${key}`] = null;
+
+      const othersAvailable = getCategoryStatusValue(rawCategoryStatusCache, "Others");
+      affectedIds.forEach(id => {
+        const item = lastItemsCache[id] || {};
+        const stock = normalizeStock(item);
+        const isOutOfStock = stock.tracked && (stock.count ?? 0) <= 0;
+        updates[`menuItems/${id}/category`] = "Others";
+        updates[`menuItems/${id}/visible`] = (!isOutOfStock) && othersAvailable;
+        updates[`menuItems/${id}/autoHiddenByStock`] = !!isOutOfStock;
+      });
+
+      await update(ref(db), updates);
+
+      delete categoryRegistryCache[key];
+      delete rawCategoryStatusCache[key];
+      affectedIds.forEach(id => {
+        if(lastItemsCache[id]){
+          lastItemsCache[id].category = "Others";
+        }
+      });
+
+      if(sanitizeCategoryKey(categoryEl?.value || "") === key){
+        renderCategorySelects("Others");
+      }
+      syncCategoryState("Others");
+      updateUniqueCodeUI({ forceGenerate:true });
+      showNotice(`Deleted category "${normalized}".`);
+    }catch(err){
+      console.error(err);
+      showNotice("Failed to delete category.");
+    }
   }
 
   // ---------------- Category panel toggle ----------------
@@ -1185,6 +1408,7 @@
 
     nameEl.value = data?.name || "";
     priceEl.value = Number(data?.price || 0).toFixed(2);
+    renderCategorySelects(data?.category || "food");
     categoryEl.value = normalizeCategory(data?.category || "food");
     imageEl.value = data?.image || "";
     fastOrderDisplayModeEl.value = data?.fastOrderDisplayMode === "code" ? "code" : "image";
@@ -1239,7 +1463,8 @@
 
     nameEl.value = "";
     priceEl.value = "0.00";
-    categoryEl.value = "food";
+    renderCategorySelects("food");
+    categoryEl.value = categories.find(cat => sanitizeCategoryKey(cat) === "food") || categories[0] || "Others";
     imageEl.value = "";
     fastOrderDisplayModeEl.value = "image";
     allowAddOnsEnabled = false;
@@ -1474,22 +1699,22 @@
       row.className = "category-row";
 
       const left = document.createElement("div");
-      left.style.display = "flex";
-      left.style.flexDirection = "column";
-      left.style.gap = "2px";
+      left.className = "category-row-left";
 
       const name = document.createElement("div");
       name.className = "category-name";
       name.innerText = cat;
 
+      const linkedCount = getItemIdsForCategory(cat).length;
       const note = document.createElement("div");
       note.className = "category-note";
-      note.innerText = currentCategoryStatus[cat] === false
-        ? "Currently unavailable — items hidden"
-        : "Currently available — items visible";
+      note.innerText = `${currentCategoryStatus[cat] === false ? "Currently unavailable — items hidden" : "Currently available — items visible"} • ${linkedCount} item(s)`;
 
       left.appendChild(name);
       left.appendChild(note);
+
+      const actions = document.createElement("div");
+      actions.className = "category-row-actions";
 
       const switchEl = document.createElement("span");
       switchEl.className = "switch " + (currentCategoryStatus[cat] !== false ? "on" : "");
@@ -1530,19 +1755,32 @@
           });
 
           await update(ref(db), updates);
+          rawCategoryStatusCache[sanitizeKey(cat)] = newStatus;
           showNotice(`${affected} item(s) in "${cat}" set to ${newStatus ? "available" : "unavailable"}`);
 
-          currentCategoryStatus[cat] = newStatus;
-          renderCategoryAvailabilityUI();
-          renderItems(lastItemsCache || {});
+          syncCategoryState(categoryEl?.value || cat);
         }catch(err){
           console.error(err);
           showNotice("Failed to update category");
         }
       });
 
+      actions.appendChild(switchEl);
+
+      if(sanitizeKey(cat) !== sanitizeKey("Others")){
+        const deleteCategoryBtn = document.createElement("button");
+        deleteCategoryBtn.type = "button";
+        deleteCategoryBtn.className = "mini-btn mini-danger";
+        deleteCategoryBtn.innerText = "Delete";
+        deleteCategoryBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteCategory(cat);
+        });
+        actions.appendChild(deleteCategoryBtn);
+      }
+
       row.appendChild(left);
-      row.appendChild(switchEl);
+      row.appendChild(actions);
       categoryAvailabilityEl.appendChild(row);
     });
   }
@@ -1725,25 +1963,33 @@
   // ---------------- Toolbar events ----------------
   filterEl.addEventListener("change", () => renderItems(lastItemsCache || {}));
   searchEl.addEventListener("input", () => renderItems(lastItemsCache || {}));
+  addCategoryBtn?.addEventListener("click", () => addCategoryFromInput());
+  newCategoryNameEl?.addEventListener("keydown", (e) => {
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    addCategoryFromInput();
+  });
 
   // ---------------- Live listeners ----------------
   onValue(itemsRef, (snap) => {
     const data = snap.val() || {};
     lastItemsCache = data;
-    renderItems(data);
+    syncCategoryState(categoryEl?.value || "food");
     enforceVisibilityRules(data);
   });
 
   onValue(categoryStatusRef, (snap) => {
-    const raw = snap.val() || {};
-    const mapped = {};
-    categories.forEach(cat => {
-      mapped[cat] = getCategoryStatusValue(raw, cat);
-    });
-    currentCategoryStatus = mapped;
-    renderCategoryAvailabilityUI();
-    renderItems(lastItemsCache || {});
+    rawCategoryStatusCache = snap.val() || {};
+    syncCategoryState(categoryEl?.value || "food");
     enforceVisibilityRules(lastItemsCache || {});
+  });
+
+  onValue(categoriesRef, (snap) => {
+    categoryRegistryCache = snap.val() || {};
+    if(Object.keys(categoryRegistryCache).length === 0){
+      ensureDefaultCategoriesSeeded();
+    }
+    syncCategoryState(categoryEl?.value || "food");
   });
 
   onValue(materialsRef, (snap) => {
