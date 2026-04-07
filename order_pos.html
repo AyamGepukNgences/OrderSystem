@@ -1156,6 +1156,101 @@
       }
     }
 
+    .qr-orders-card{
+      text-align:left;
+      max-height:min(78vh, 760px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .qr-orders-list{
+      display:grid;
+      gap:10px;
+      overflow:auto;
+      max-height:min(56vh, 520px);
+      padding-right:2px;
+    }
+    .qr-order-item{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#111419;
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+    .qr-order-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .qr-order-title{
+      font-size:15px;
+      font-weight:900;
+      letter-spacing:-.02em;
+    }
+    .qr-order-meta{
+      display:grid;
+      gap:4px;
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .qr-order-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .qr-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      font-size:11px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .qr-badge.unpaid{
+      border-color:rgba(244,178,62,.34);
+      color:#ffd58a;
+      background:rgba(244,178,62,.10);
+    }
+    .qr-badge.paid{
+      border-color:rgba(24,165,91,.28);
+      color:#abefc6;
+      background:rgba(24,165,91,.12);
+    }
+    .qr-badge.warn{
+      border-color:rgba(255,106,95,.34);
+      color:#ffb4ad;
+      background:rgba(255,106,95,.12);
+    }
+    .cashier-alert-item{
+      border-color:rgba(255,106,95,.26);
+      background:rgba(255,106,95,.05);
+    }
+    .cashier-alert-section-title{
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:var(--muted);
+      margin:4px 0 -2px;
+    }
+    .qr-empty{
+      border:1px dashed var(--line-soft);
+      border-radius:16px;
+      padding:18px 16px;
+      text-align:center;
+      color:var(--muted);
+      background:rgba(255,255,255,.03);
+    }
+
     body[data-theme="light"]{
       background:radial-gradient(circle at top left, rgba(16,182,176,.12), transparent 28%), linear-gradient(180deg, #f7fbfc, #edf3f7);
       color:#17212b;
@@ -1267,6 +1362,74 @@
     body[data-theme="light"] .overlay,
     body[data-theme="light"] .center-overlay{background:rgba(17,24,39,.26)}
 
+
+    .receipt-pay-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+      margin-top:14px;
+    }
+    .receipt-pay-btn{
+      min-height:58px;
+      border-radius:16px;
+      border:1px solid var(--line-soft);
+      background:linear-gradient(180deg, rgba(43,48,54,.98), rgba(28,33,39,.98));
+      color:var(--text);
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      transition:transform .12s ease, border-color .18s ease, background .18s ease;
+    }
+    .receipt-pay-btn:hover{transform:translateY(-1px);border-color:rgba(16,182,176,.42)}
+    .receipt-pay-box{
+      margin-top:14px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(17,20,24,.86);
+      padding:14px;
+      text-align:left;
+      display:grid;
+      gap:10px;
+    }
+    .receipt-cash-meta{
+      display:grid;
+      gap:8px;
+    }
+    .receipt-cash-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-size:13px;
+    }
+    .receipt-cash-row strong{
+      font-size:15px;
+      letter-spacing:-.01em;
+    }
+    .receipt-cash-note{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.45;
+      text-align:left;
+    }
+    body[data-theme="light"] .receipt-pay-btn{
+      background:linear-gradient(180deg, #ffffff, #edf3f7);
+      border-color:#d2dde5;
+      color:#17212b;
+    }
+    body[data-theme="light"] .receipt-pay-box{
+      background:#ffffff;
+      border-color:#d9e4ea;
+      color:#17212b;
+    }
+    @media (max-width: 520px){
+      .receipt-pay-grid{grid-template-columns:1fr;}
+    }
+
   </style>
 
 </head>
@@ -1293,6 +1456,10 @@
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark mode">
           <span class="theme-toggle-icon" id="theme-toggle-icon">🌙</span>
           <span class="theme-toggle-label" id="theme-toggle-label">Dark</span>
+        </button>
+        <button class="theme-toggle" id="qr-orders-btn" type="button" aria-label="Open QR orders for cashier payment verification">
+          <span class="theme-toggle-icon">📲</span>
+          <span class="theme-toggle-label">QR Orders <span id="qr-orders-count">0</span> <span id="cashier-alert-pill" style="margin-left:6px">🔔 <span id="cashier-alert-count">0</span></span></span>
         </button>
         <button class="cart-btn" id="goToCartBtn" type="button">Order <span class="cart-count" id="cart-count">0</span></button>
       </div>
@@ -1441,6 +1608,58 @@
     </div>
   </div>
 
+  <div class="center-overlay" id="qr-orders-overlay" aria-hidden="true">
+    <div class="center-card qr-orders-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:900;font-size:15px;letter-spacing:-0.01em">QR orders for cashier</div>
+          <div class="small" id="qr-orders-subtitle" style="margin-top:6px">Choose a QR order to set payment type. Kitchen price changes that affect totals are also shown here for cashier review.</div>
+        </div>
+        <button class="btn btn-ghost" id="qr-orders-close-btn" type="button">Close</button>
+      </div>
+      <div id="qr-orders-list" class="qr-orders-list" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="center-overlay" id="receipt-payment-overlay" aria-hidden="true">
+    <div class="center-card">
+      <div style="font-weight:900;font-size:15px;letter-spacing:-0.01em">Choose payment type</div>
+      <div class="small" id="receipt-payment-meta" style="margin-top:8px">Select payment type before printing receipt.</div>
+      <div class="receipt-pay-grid" style="margin-top:14px">
+        <button class="receipt-pay-btn" type="button" data-receipt-pay="cash">💵 Cash</button>
+        <button class="receipt-pay-btn" type="button" data-receipt-pay="qr">📱 QR</button>
+        <button class="receipt-pay-btn" type="button" data-receipt-pay="transfer">🏦 Transfer</button>
+        <button class="receipt-pay-btn" type="button" data-receipt-pay="wave">🌊 Wave</button>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+        <button class="btn btn-ghost" id="receipt-payment-cancel-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="center-overlay" id="cash-payment-overlay" aria-hidden="true">
+    <div class="center-card">
+      <div style="font-weight:900;font-size:15px;letter-spacing:-0.01em">Cash payment</div>
+      <div class="small" id="cash-payment-meta" style="margin-top:8px">Enter customer cash. Balance = cash received - current total.</div>
+      <div class="receipt-pay-box">
+        <div class="receipt-cash-meta">
+          <div class="receipt-cash-row"><span>Total</span><strong id="cash-total-text">RM 0.00</strong></div>
+          <div class="field">
+            <label for="cash-received-input">Customer Cash (RM)</label>
+            <input id="cash-received-input" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="receipt-cash-row"><span id="cash-balance-label">Balance</span><strong id="cash-balance-text">RM 0.00</strong></div>
+        </div>
+        <div class="receipt-cash-note">This will be saved with the order so the receipt and display screen show the payment type from POS.</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+        <button class="btn btn-ghost" id="cash-payment-back-btn" type="button">Back</button>
+        <button class="btn btn-ghost" id="cash-payment-cancel-btn" type="button">Cancel</button>
+        <button class="btn btn-primary" id="cash-payment-confirm-btn" type="button">Save & Print</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1448,7 +1667,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, onValue, get, push, runTransaction } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, onValue, get, push, runTransaction, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkRBbgm2TmTKsdB78VFfSnFzTUfFAPcZI",
@@ -1463,6 +1682,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const ordersRef = ref(db, "orders");
     const categoriesRef = ref(db, "menuCategories");
 
     let categories = [
@@ -1539,6 +1759,25 @@
     const queueText = document.getElementById("queue-number-text");
     const downloadReceiptBtn = document.getElementById("download-receipt-btn");
     const closeSuccessBtn = document.getElementById("close-success-btn");
+    const qrOrdersBtn = document.getElementById("qr-orders-btn");
+    const qrOrdersCountEl = document.getElementById("qr-orders-count");
+    const cashierAlertCountEl = document.getElementById("cashier-alert-count");
+    const qrOrdersOverlay = document.getElementById("qr-orders-overlay");
+    const qrOrdersList = document.getElementById("qr-orders-list");
+    const qrOrdersCloseBtn = document.getElementById("qr-orders-close-btn");
+    const receiptPaymentOverlay = document.getElementById("receipt-payment-overlay");
+    const receiptPaymentMeta = document.getElementById("receipt-payment-meta");
+    const receiptPaymentCancelBtn = document.getElementById("receipt-payment-cancel-btn");
+    const receiptPaymentButtons = Array.from(document.querySelectorAll("[data-receipt-pay]"));
+    const cashPaymentOverlay = document.getElementById("cash-payment-overlay");
+    const cashPaymentMeta = document.getElementById("cash-payment-meta");
+    const cashTotalText = document.getElementById("cash-total-text");
+    const cashReceivedInput = document.getElementById("cash-received-input");
+    const cashBalanceLabel = document.getElementById("cash-balance-label");
+    const cashBalanceText = document.getElementById("cash-balance-text");
+    const cashPaymentBackBtn = document.getElementById("cash-payment-back-btn");
+    const cashPaymentCancelBtn = document.getElementById("cash-payment-cancel-btn");
+    const cashPaymentConfirmBtn = document.getElementById("cash-payment-confirm-btn");
     const toastEl = document.getElementById("toast");
 
     let selectedCategory = "all";
@@ -1550,6 +1789,9 @@
     let tablesCache = {};
     let cart = [];
     let lastOrderForReceipt = null;
+    let sharedOrdersCache = {};
+    let seenCashierAlertIds = new Set();
+    let cashierAlertsBootstrapped = false;
     let isSubmitting = false;
 
     const STRICT_MATERIAL_STOCK = false;
@@ -1733,13 +1975,49 @@
       }
     }
 
+    const RECEIPT_PAYMENT_TYPES = Object.freeze({
+      cash: "Cash",
+      qr: "QR",
+      transfer: "Transfer",
+      wave: "Wave"
+    });
+
+    function normalizePaymentType(raw){
+      const value = String(raw || '').trim().toLowerCase();
+      if(value === 'cash') return 'cash';
+      if(value === 'qr') return 'qr';
+      if(value === 'transfer') return 'transfer';
+      if(value === 'wave') return 'wave';
+      return '';
+    }
+
+    function prettyPaymentType(raw){
+      const key = normalizePaymentType(raw);
+      return key ? RECEIPT_PAYMENT_TYPES[key] : '';
+    }
+
     function getReceiptPaymentText(orderDetails){
       const paymentStatus = String(orderDetails?.paymentStatus || '').trim().toLowerCase();
-      const paymentType = String(orderDetails?.paymentType || '').trim();
-      if(paymentStatus === 'paid' && paymentType) return `${paymentType} (Paid)`;
+      const paymentTypeLabel = prettyPaymentType(orderDetails?.paymentType);
+      if(paymentStatus === 'paid' && paymentTypeLabel) return `${paymentTypeLabel} (Paid)`;
       if(paymentStatus === 'paid') return 'Paid';
-      if(paymentType) return paymentType;
+      if(paymentTypeLabel) return paymentTypeLabel;
       return orderDetails?.orderSource === 'owner-fast-order' ? 'Counter order' : 'Pay at counter';
+    }
+
+    function getReceiptFinancialRows(orderDetails){
+      const rows = [{ label: 'Payment', value: getReceiptPaymentText(orderDetails) }];
+      const isCash = normalizePaymentType(orderDetails?.paymentType) === 'cash';
+      if(isCash){
+        const cashReceived = Number(orderDetails?.cashReceived);
+        if(Number.isFinite(cashReceived)){
+          rows.push({ label: 'Cash', value: RM(cashReceived) });
+          const fallbackBalance = cashReceived - Number(orderDetails?.totalPrice || 0);
+          const balanceValue = Number(orderDetails?.changeDue);
+          rows.push({ label: 'Balance', value: RM(Number.isFinite(balanceValue) ? balanceValue : fallbackBalance) });
+        }
+      }
+      return rows;
     }
 
     function getReceiptSections(orderDetails){
@@ -1768,6 +2046,7 @@
 
     function buildReceiptText(orderDetails, receiptDate){
       const sections = getReceiptSections(orderDetails);
+      const paymentLines = getReceiptFinancialRows(orderDetails).map((entry) => `${entry.label}: ${entry.value}`);
       const lines = [
         RESTAURANT_INFO.name,
         RESTAURANT_INFO.ssm,
@@ -1778,6 +2057,7 @@
         `Name: ${orderDetails?.name || "-"}`,
         `Table: ${orderDetails?.table || "-"}`,
         orderDetails?.orderType ? `Type: ${orderDetails.orderType}` : null,
+        ...paymentLines,
         `Request: ${orderDetails?.request || "None"}`
       ].filter((line) => line !== null);
 
@@ -2498,7 +2778,7 @@
 
     async function getLastQueueNumber(){
       try{
-        const snap = await get(ref(db, "orders"));
+        const snap = await get(ordersRef);
         if(!snap.exists()) return 6999;
         const nums = Object.values(snap.val() || {})
           .map(order => Number(order?.queueNumber))
@@ -2651,6 +2931,261 @@
       return menuTx;
     }
 
+    function isQrIncomingOrder(order){
+      return String(order?.orderSource || '').trim().toLowerCase() !== 'owner-fast-order';
+    }
+
+    function isQrPaymentPending(order){
+      if(!isQrIncomingOrder(order)) return false;
+      const paymentStatus = String(order?.paymentStatus || '').trim().toLowerCase();
+      return paymentStatus !== 'paid' && paymentStatus !== 'cancelled';
+    }
+
+    function getReadableOrderTime(order){
+      try{
+        return new Date(order?.timestamp || Date.now()).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      }catch{
+        return '-';
+      }
+    }
+
+    function syncLastReceiptOrderFromCache(orderId, nextPatch = {}){
+      if(lastOrderForReceipt?.orderId !== orderId) return;
+      const current = sharedOrdersCache[orderId] || {};
+      lastOrderForReceipt = {
+        ...current,
+        ...lastOrderForReceipt,
+        ...nextPatch,
+        orderId
+      };
+    }
+
+    function isCashierPriceAlertPending(order){
+      return String(order?.cashierNoticeType || '').trim().toLowerCase() === 'price-change'
+        && String(order?.cashierNoticeStatus || '').trim().toLowerCase() !== 'reviewed';
+    }
+
+    function isOrderPaid(order){
+      return String(order?.paymentStatus || '').trim().toLowerCase() === 'paid';
+    }
+
+    function orderNeedsReceiptReprint(order){
+      return Boolean(order?.receiptNeedsReprint)
+        || String(order?.receiptStatus || '').trim().toLowerCase() === 'invalid';
+    }
+
+    function hydrateReceiptOrder(orderId){
+      const order = sharedOrdersCache[orderId];
+      if(!order) return null;
+      lastOrderForReceipt = {
+        ...order,
+        orderId,
+        paymentStatus: String(order?.paymentStatus || 'unpaid'),
+        paymentType: normalizePaymentType(order?.paymentType),
+        cashReceived: Number.isFinite(Number(order?.cashReceived)) ? Number(order?.cashReceived) : null,
+        changeDue: Number.isFinite(Number(order?.changeDue)) ? Number(order?.changeDue) : null,
+        receiptPrintCount: Number(order?.receiptPrintCount || 0) || 0,
+        receiptNeedsReprint: Boolean(order?.receiptNeedsReprint),
+        receiptStatus: String(order?.receiptStatus || '')
+      };
+      return lastOrderForReceipt;
+    }
+
+    function getPendingCashierAlertEntries(){
+      return Object.entries(sharedOrdersCache || {})
+        .filter(([, order]) => isCashierPriceAlertPending(order))
+        .sort((a, b) => Number(b[1]?.cashierNoticeAt || b[1]?.updatedAt || 0) - Number(a[1]?.cashierNoticeAt || a[1]?.updatedAt || 0));
+    }
+
+    function handleCashierAlertSignals(){
+      const nextIds = new Set(getPendingCashierAlertEntries().map(([id]) => id));
+      if(cashierAlertsBootstrapped){
+        const newIds = Array.from(nextIds).filter((id) => !seenCashierAlertIds.has(id));
+        if(newIds.length){
+          showToast(`${newIds.length} kitchen edit ${newIds.length === 1 ? 'needs' : 'need'} cashier review`);
+        }
+      }
+      seenCashierAlertIds = nextIds;
+      cashierAlertsBootstrapped = true;
+    }
+
+    async function acknowledgeCashierAlert(orderId, extraPatch = {}, successMessage = 'Cashier alert marked reviewed'){
+      if(!orderId) return;
+      try{
+        const reviewedAt = Date.now();
+        const payload = {
+          cashierNoticeStatus: 'reviewed',
+          cashierNoticeReviewedAt: reviewedAt,
+          ...extraPatch
+        };
+        await update(ref(db, `orders/${orderId}`), payload);
+        if(sharedOrdersCache[orderId]){
+          sharedOrdersCache[orderId] = {
+            ...sharedOrdersCache[orderId],
+            ...payload
+          };
+        }
+        syncLastReceiptOrderFromCache(orderId, payload);
+        renderQrOrdersList();
+        showToast(successMessage);
+      }catch(err){
+        console.error('Acknowledge cashier alert error:', err);
+        showToast('Failed to update cashier alert');
+      }
+    }
+
+    async function markReceiptAsPrinted(orderId){
+      if(!orderId) return;
+      const current = sharedOrdersCache[orderId] || lastOrderForReceipt || {};
+      const needsReprint = orderNeedsReceiptReprint(current);
+      const printedAt = Date.now();
+      const nextCount = (Number(current?.receiptPrintCount || lastOrderForReceipt?.receiptPrintCount || 0) || 0) + 1;
+      await acknowledgeCashierAlert(orderId, {
+        receiptStatus: 'valid',
+        receiptNeedsReprint: false,
+        receiptInvalidatedAt: null,
+        receiptInvalidReason: null,
+        receiptPrintedAt: printedAt,
+        receiptLastReprintedAt: printedAt,
+        receiptPrintCount: nextCount
+      }, needsReprint ? 'Replacement receipt printed' : 'Receipt printed');
+    }
+
+    function renderQrOrdersList(){
+      if(!qrOrdersList) return;
+      const pendingAlerts = getPendingCashierAlertEntries();
+      const pendingEntries = Object.entries(sharedOrdersCache || {})
+        .filter(([, order]) => isQrPaymentPending(order))
+        .sort((a, b) => new Date(a[1]?.timestamp || 0).getTime() - new Date(b[1]?.timestamp || 0).getTime());
+
+      if(qrOrdersCountEl) qrOrdersCountEl.textContent = String(pendingEntries.length);
+      if(cashierAlertCountEl) cashierAlertCountEl.textContent = String(pendingAlerts.length);
+
+      const sections = [];
+
+      if(pendingAlerts.length){
+        const alertCards = pendingAlerts.map(([orderId, order]) => {
+          const totalBefore = Number(order?.priceBeforeEdit || order?.totalBeforeEdit || 0);
+          const totalAfter = Number(order?.priceAfterEdit || order?.totalPrice || 0);
+          const delta = Number.isFinite(Number(order?.priceChangeDelta)) ? Number(order.priceChangeDelta) : Number((totalAfter - totalBefore).toFixed(2));
+          const totalDelta = `${delta >= 0 ? '+' : '-'}${RM(Math.abs(delta))}`;
+          const queue = escapeHtml(order?.queueNumber || '-');
+          const name = escapeHtml(order?.name || 'Walk-in');
+          const table = escapeHtml(order?.table || '-');
+          const sourceLabel = isQrIncomingOrder(order) ? 'QR Order' : 'Counter Order';
+          const receiptInvalid = orderNeedsReceiptReprint(order);
+          const paymentPending = !isOrderPaid(order);
+          const helperText = receiptInvalid
+            ? (paymentPending
+              ? 'Updated total needs cashier payment confirmation and a new receipt.'
+              : 'Old receipt is no longer valid. Cashier must print a new receipt.')
+            : 'Kitchen changed the total. Please review this order.';
+          const primaryAction = paymentPending
+            ? `<button class="btn btn-primary" type="button" data-qr-pay="${escapeHtml(orderId)}">Choose Payment & Print</button>`
+            : `<button class="btn btn-primary" type="button" data-alert-print="${escapeHtml(orderId)}">${receiptInvalid ? 'Print New Receipt' : 'Open Receipt'}</button>`;
+          const secondaryAction = receiptInvalid
+            ? ''
+            : `<button class="btn btn-ghost" type="button" data-alert-review="${escapeHtml(orderId)}">Mark Reviewed</button>`;
+          return `
+            <article class="qr-order-item cashier-alert-item">
+              <div class="qr-order-top">
+                <div>
+                  <div class="qr-order-title">⚠️ Order #${queue} • ${name}</div>
+                  <div class="qr-order-meta">
+                    <div>Source: ${escapeHtml(sourceLabel)} • Table: ${table}</div>
+                    <div>Before: ${escapeHtml(RM(totalBefore))} • After: ${escapeHtml(RM(totalAfter))}</div>
+                    <div>Difference: ${escapeHtml(totalDelta)} • Time: ${escapeHtml(getReadableOrderTime(order))}</div>
+                    <div>${escapeHtml(helperText)}</div>
+                  </div>
+                </div>
+                <span class="qr-badge warn">${receiptInvalid ? 'Receipt invalid' : 'Price changed'}</span>
+              </div>
+              <div class="qr-order-actions">
+                ${primaryAction}
+                ${secondaryAction}
+              </div>
+            </article>
+          `;
+        }).join('');
+        sections.push(`
+          <div class="cashier-alert-section-title">Cashier alerts</div>
+          ${alertCards}
+        `);
+      }
+
+      if(pendingEntries.length){
+        const qrCards = pendingEntries.map(([orderId, order]) => {
+          const total = RM(order?.totalPrice || 0);
+          const name = escapeHtml(order?.name || 'Walk-in');
+          const queue = escapeHtml(order?.queueNumber || '-');
+          const table = escapeHtml(order?.table || '-');
+          const request = escapeHtml(order?.request || 'None');
+          const paymentText = escapeHtml(getReceiptPaymentText(order));
+          const itemCount = Array.isArray(order?.cart) ? order.cart.reduce((sum, item) => sum + Math.max(1, Number(item?.quantity || 1) || 1), 0) : 0;
+          return `
+            <article class="qr-order-item">
+              <div class="qr-order-top">
+                <div>
+                  <div class="qr-order-title">Order #${queue} • ${name}</div>
+                  <div class="qr-order-meta">
+                    <div>Table: ${table} • Time: ${escapeHtml(getReadableOrderTime(order))}</div>
+                    <div>Total: ${escapeHtml(total)} • Items: ${escapeHtml(itemCount)}</div>
+                    <div>Request: ${request}</div>
+                  </div>
+                </div>
+                <span class="qr-badge unpaid">${paymentText}</span>
+              </div>
+              <div class="qr-order-actions">
+                <button class="btn btn-primary" type="button" data-qr-pay="${escapeHtml(orderId)}">Choose Payment</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+        sections.push(`
+          <div class="cashier-alert-section-title">Pending QR payment</div>
+          ${qrCards}
+        `);
+      }
+
+      if(!sections.length){
+        qrOrdersList.innerHTML = '<div class="qr-empty">No QR orders or cashier alerts are waiting right now.</div>';
+        return;
+      }
+
+      qrOrdersList.innerHTML = sections.join('');
+    }
+
+    function openQrOrdersOverlay(){
+      if(!qrOrdersOverlay) return;
+      renderQrOrdersList();
+      qrOrdersOverlay.classList.add('show');
+      qrOrdersOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeQrOrdersOverlay(){
+      if(!qrOrdersOverlay) return;
+      qrOrdersOverlay.classList.remove('show');
+      qrOrdersOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function prepareQrOrderForPayment(orderId){
+      const order = hydrateReceiptOrder(orderId);
+      if(!order) return;
+      closeQrOrdersOverlay();
+      openReceiptPaymentOverlay();
+    }
+
+    async function handleAlertPrint(orderId){
+      const order = hydrateReceiptOrder(orderId);
+      if(!order) return;
+      closeQrOrdersOverlay();
+      if(isOrderPaid(order) && normalizePaymentType(order?.paymentType)){
+        await printLatestReceipt();
+        return;
+      }
+      openReceiptPaymentOverlay();
+    }
+
     async function submitOrder(source){
       if(isSubmitting) return;
 
@@ -2715,9 +3250,16 @@
           timestamp: new Date().toISOString()
         };
 
-        await push(ref(db, "orders"), orderDetails);
+        const newOrderRef = await push(ordersRef, orderDetails);
 
-        lastOrderForReceipt = orderDetails;
+        lastOrderForReceipt = {
+          ...orderDetails,
+          orderId: newOrderRef?.key || null,
+          paymentStatus: "unpaid",
+          paymentType: "",
+          cashReceived: null,
+          changeDue: null
+        };
         cart = [];
         updateCartUI();
 
@@ -2738,6 +3280,124 @@
         setSubmittingState(false);
         if(submitBtn) submitBtn.blur();
       }
+    }
+
+    function closeReceiptPaymentOverlay(){
+      if(!receiptPaymentOverlay) return;
+      receiptPaymentOverlay.classList.remove("show");
+      receiptPaymentOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    function openReceiptPaymentOverlay(){
+      if(!lastOrderForReceipt || !receiptPaymentOverlay) return;
+      const total = RM(lastOrderForReceipt?.totalPrice || 0);
+      receiptPaymentMeta.textContent = `Order #${lastOrderForReceipt?.queueNumber || '-'} • ${lastOrderForReceipt?.name || 'Walk-in'} • Total ${total}`;
+      receiptPaymentOverlay.classList.add("show");
+      receiptPaymentOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeCashPaymentOverlay(){
+      if(!cashPaymentOverlay) return;
+      cashPaymentOverlay.classList.remove("show");
+      cashPaymentOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    function updateCashPaymentSummary(){
+      const total = Number(lastOrderForReceipt?.totalPrice || 0);
+      const received = Number(cashReceivedInput?.value || 0);
+      const balance = received - total;
+      if(cashTotalText) cashTotalText.textContent = RM(total);
+      if(cashBalanceLabel) cashBalanceLabel.textContent = balance >= 0 ? "Balance" : "Still Due";
+      if(cashBalanceText) cashBalanceText.textContent = RM(balance >= 0 ? balance : Math.abs(balance));
+      if(cashPaymentConfirmBtn) cashPaymentConfirmBtn.disabled = !(Number.isFinite(received) && received >= total);
+    }
+
+    function openCashPaymentOverlay(){
+      if(!lastOrderForReceipt || !cashPaymentOverlay) return;
+      closeReceiptPaymentOverlay();
+      const total = Number(lastOrderForReceipt?.totalPrice || 0);
+      if(cashPaymentMeta){
+        cashPaymentMeta.textContent = `Order #${lastOrderForReceipt?.queueNumber || '-'} • Enter customer cash. Balance = cash received - current total.`;
+      }
+      if(cashReceivedInput){
+        const existingCash = Number(lastOrderForReceipt?.cashReceived);
+        cashReceivedInput.value = Number.isFinite(existingCash) && existingCash > 0 ? existingCash.toFixed(2) : total.toFixed(2);
+      }
+      updateCashPaymentSummary();
+      cashPaymentOverlay.classList.add("show");
+      cashPaymentOverlay.setAttribute("aria-hidden", "false");
+      setTimeout(() => cashReceivedInput?.focus(), 20);
+    }
+
+    async function persistReceiptPayment(paymentType, extras = {}){
+      const normalizedType = normalizePaymentType(paymentType);
+      const total = Number(lastOrderForReceipt?.totalPrice || 0);
+      const cashReceivedRaw = Number(extras.cashReceived);
+      const changeDueRaw = Number.isFinite(cashReceivedRaw) ? cashReceivedRaw - total : Number(extras.changeDue);
+      const now = Date.now();
+      const payload = {
+        paymentType: normalizedType || null,
+        paymentStatus: normalizedType ? "paid" : "unpaid",
+        paymentUpdatedAt: now,
+        lastTransactionAt: now,
+        transactionStatus: normalizedType ? "recorded" : "pending",
+        paidAt: normalizedType ? (lastOrderForReceipt?.paidAt || now) : null,
+        cashReceived: normalizedType === "cash" && Number.isFinite(cashReceivedRaw) ? Number(cashReceivedRaw.toFixed(2)) : null,
+        changeDue: normalizedType === "cash" && Number.isFinite(changeDueRaw) ? Number(changeDueRaw.toFixed(2)) : null
+      };
+
+      lastOrderForReceipt = { ...(lastOrderForReceipt || {}), ...payload };
+
+      const orderId = lastOrderForReceipt?.orderId;
+      if(orderId){
+        sharedOrdersCache[orderId] = { ...(sharedOrdersCache[orderId] || {}), ...payload };
+        try{
+          await update(ref(db, `orders/${orderId}`), payload);
+        }catch(err){
+          console.error("Failed to sync payment info", err);
+          showToast("Receipt printed, but payment sync failed.");
+        }
+      }
+      syncLastReceiptOrderFromCache(orderId || '', payload);
+      renderQrOrdersList();
+      return lastOrderForReceipt;
+    }
+
+    async function printLatestReceipt(){
+      if(!lastOrderForReceipt) return false;
+      const receiptDate = getReceiptTimestampText(lastOrderForReceipt);
+      let printed = false;
+      try{
+        const opened = printReceiptThermal(lastOrderForReceipt);
+        if(!opened){
+          downloadReceiptFallback(lastOrderForReceipt, receiptDate);
+          showToast("Print popup blocked. Downloaded text receipt instead.");
+        }
+        printed = true;
+      }catch(err){
+        console.error("Receipt failed", err);
+        try{
+          downloadReceiptFallback(lastOrderForReceipt, receiptDate);
+          showToast("Print unavailable. Downloaded text receipt instead.");
+          printed = true;
+        }catch(fallbackErr){
+          console.error("Receipt fallback failed", fallbackErr);
+          alert("Failed to generate receipt.");
+          return false;
+        }
+      }
+
+      if(printed && lastOrderForReceipt?.orderId){
+        await markReceiptAsPrinted(lastOrderForReceipt.orderId);
+      }
+      return printed;
+    }
+
+    async function finalizeReceiptPaymentAndPrint(paymentType, extras = {}){
+      await persistReceiptPayment(paymentType, extras);
+      closeReceiptPaymentOverlay();
+      closeCashPaymentOverlay();
+      await printLatestReceipt();
     }
 
     function printReceiptThermal(orderDetails){
@@ -2887,7 +3547,7 @@
               <div class="meta-row"><span>Name</span><span>${escapeHtml(orderDetails?.name || '-')}</span></div>
               <div class="meta-row"><span>Table</span><span>${escapeHtml(orderDetails?.table || '-')}</span></div>
               ${orderDetails?.orderType ? `<div class="meta-row"><span>Type</span><span>${escapeHtml(orderDetails.orderType)}</span></div>` : ''}
-              <div class="meta-row"><span>Payment</span><span>${escapeHtml(getReceiptPaymentText(orderDetails))}</span></div>
+              ${getReceiptFinancialRows(orderDetails).map((entry) => `<div class="meta-row"><span>${escapeHtml(entry.label)}</span><span>${escapeHtml(entry.value)}</span></div>`).join('')}
               <div class="meta-row"><span>Request</span><span>${escapeHtml(orderDetails?.request || 'None')}</span></div>
             </div>
             <div class="line"></div>
@@ -2967,6 +3627,7 @@
         `Name: ${orderDetails.name || "-"}`,
         `Table: ${orderDetails.table || "-"}`,
         orderDetails.orderType ? `Type: ${orderDetails.orderType}` : "",
+        ...getReceiptFinancialRows(orderDetails).map((entry) => `${entry.label}: ${entry.value}`),
         `Request: ${orderDetails.request || "None"}`
       ].filter(Boolean).forEach((line) => writeWrapped(line, { width: contentWidth, lineHeight: 3.8 }));
 
@@ -3076,24 +3737,77 @@
         alert("Receipt not available.");
         return;
       }
-      const receiptDate = getReceiptTimestampText(lastOrderForReceipt);
-      try{
-        const opened = printReceiptThermal(lastOrderForReceipt);
-        if(!opened){
-          downloadReceiptFallback(lastOrderForReceipt, receiptDate);
-          showToast("Print popup blocked. Downloaded text receipt instead.");
-        }
-      }catch(err){
-        console.error("Receipt failed", err);
-        try{
-          downloadReceiptFallback(lastOrderForReceipt, receiptDate);
-          showToast("Print unavailable. Downloaded text receipt instead.");
-        }catch(fallbackErr){
-          console.error("Receipt fallback failed", fallbackErr);
-          alert("Failed to generate receipt.");
-        }
-      }
+      openReceiptPaymentOverlay();
     });
+
+    receiptPaymentButtons.forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const selectedType = btn.dataset.receiptPay || "";
+        if(selectedType === "cash"){
+          openCashPaymentOverlay();
+          return;
+        }
+        await finalizeReceiptPaymentAndPrint(selectedType);
+      });
+    });
+
+    if(receiptPaymentCancelBtn) receiptPaymentCancelBtn.addEventListener("click", closeReceiptPaymentOverlay);
+    if(receiptPaymentOverlay){
+      receiptPaymentOverlay.addEventListener("click", (e) => {
+        if(e.target === receiptPaymentOverlay) closeReceiptPaymentOverlay();
+      });
+    }
+    if(cashReceivedInput) cashReceivedInput.addEventListener("input", updateCashPaymentSummary);
+    if(cashPaymentBackBtn) cashPaymentBackBtn.addEventListener("click", () => {
+      closeCashPaymentOverlay();
+      openReceiptPaymentOverlay();
+    });
+    if(cashPaymentCancelBtn) cashPaymentCancelBtn.addEventListener("click", closeCashPaymentOverlay);
+    if(cashPaymentOverlay){
+      cashPaymentOverlay.addEventListener("click", (e) => {
+        if(e.target === cashPaymentOverlay) closeCashPaymentOverlay();
+      });
+    }
+    if(cashPaymentConfirmBtn){
+      cashPaymentConfirmBtn.addEventListener("click", async () => {
+        const received = Number(cashReceivedInput?.value || 0);
+        const total = Number(lastOrderForReceipt?.totalPrice || 0);
+        if(!Number.isFinite(received) || received < total){
+          alert("Customer cash must be at least the current total.");
+          cashReceivedInput?.focus();
+          return;
+        }
+        await finalizeReceiptPaymentAndPrint("cash", {
+          cashReceived: received,
+          changeDue: received - total
+        });
+      });
+    }
+    if(qrOrdersBtn) qrOrdersBtn.addEventListener("click", openQrOrdersOverlay);
+    if(qrOrdersCloseBtn) qrOrdersCloseBtn.addEventListener("click", closeQrOrdersOverlay);
+    if(qrOrdersOverlay){
+      qrOrdersOverlay.addEventListener("click", (e) => {
+        if(e.target === qrOrdersOverlay) closeQrOrdersOverlay();
+      });
+    }
+    if(qrOrdersList){
+      qrOrdersList.addEventListener("click", async (e) => {
+        const payBtn = e.target.closest('[data-qr-pay]');
+        if(payBtn){
+          prepareQrOrderForPayment(payBtn.dataset.qrPay || '');
+          return;
+        }
+        const printBtn = e.target.closest('[data-alert-print]');
+        if(printBtn){
+          await handleAlertPrint(printBtn.dataset.alertPrint || '');
+          return;
+        }
+        const reviewBtn = e.target.closest('[data-alert-review]');
+        if(reviewBtn){
+          await acknowledgeCashierAlert(reviewBtn.dataset.alertReview || '');
+        }
+      });
+    }
     closeSuccessBtn.addEventListener("click", () => successOverlay.classList.remove("show"));
     successOverlay.addEventListener("click", (e) => {
       if(e.target === successOverlay) successOverlay.classList.remove("show");
@@ -3137,6 +3851,19 @@
       applyOrderTypeToCheckout();
       renderTableRail();
       refreshQuickContext();
+    });
+
+    onValue(ordersRef, (snap) => {
+      const next = {};
+      snap.forEach((child) => {
+        next[child.key] = child.val() || {};
+      });
+      sharedOrdersCache = next;
+      if(lastOrderForReceipt?.orderId){
+        syncLastReceiptOrderFromCache(lastOrderForReceipt.orderId);
+      }
+      handleCashierAlertSignals();
+      renderQrOrdersList();
     });
 
     themeToggleBtn?.addEventListener("click", toggleTheme);
